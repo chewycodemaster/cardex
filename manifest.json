@@ -1,0 +1,35 @@
+{
+  "name": "Cardex – Loyalty Card Wallet",
+  "short_name": "Cardex",
+  "description": "Fast, offline-first loyalty card wallet with barcode scanning and location detection",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f4f1",
+  "theme_color": "#f5f4f1",
+  "lang": "en-CA",
+  "categories": ["lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Add Card",
+      "short_name": "Add",
+      "description": "Add a new loyalty card",
+      "url": "./index.html"
+    }
+  ]
+}

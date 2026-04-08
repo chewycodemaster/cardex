@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f8f7f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cardex">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Fast, offline-first loyalty card wallet">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/apple-touch-icon.png">
+<title>Cardex</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f4f1;--bg2:#ffffff;--bg3:#eeece8;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.11);
+  --text:#1a1917;--muted:#9b9794;
+  --accent:#f97316;--accent2:rgba(249,115,22,0.10);
+  --danger:#ef4444;--card-r:18px;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+  --shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05);
+  --shadow-md:0 2px 8px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font)}
+#app{max-width:430px;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative}
+
+/* SCREENS */
+.screen{flex:1;display:flex;flex-direction:column;overflow:hidden;animation:fadeIn .18s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADER */
+.header{padding:env(safe-area-inset-top,18px) 20px 10px;padding-top:calc(env(safe-area-inset-top,0px) + 18px);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.app-title{font-size:22px;font-weight:600;letter-spacing:-.5px;flex-shrink:0}
+.app-title span{color:var(--accent)}
+.header-actions{display:flex;gap:8px}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:var(--bg2);border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px;transition:background .15s;flex-shrink:0;-webkit-appearance:none;box-shadow:var(--shadow)}
+.icon-btn:active{background:var(--bg3);transform:scale(.95)}
+
+/* SEARCH */
+.search-bar{margin:0 20px 10px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:.5px solid var(--border2);border-radius:12px;padding:0 14px;transition:border-color .15s,box-shadow .15s;flex-shrink:0;box-shadow:var(--shadow)}
+.search-bar:focus-within{border-color:rgba(249,115,22,.5);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.search-icon{color:var(--muted);font-size:15px;flex-shrink:0}
+.search-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:14px;height:42px}
+.search-input::placeholder{color:var(--muted)}
+.search-clear{color:var(--muted);cursor:pointer;font-size:14px;padding:4px}
+
+/* FILTER CHIPS */
+.filter-row{display:flex;gap:6px;padding:0 20px 10px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;background:var(--bg2);border:.5px solid var(--border2);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s;box-shadow:var(--shadow)}
+.filter-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(249,115,22,.3)}
+
+/* LOCATION BANNER */
+.location-banner{margin:0 20px 10px;background:var(--accent2);border:.5px solid rgba(249,115,22,.25);border-radius:12px;padding:9px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0}
+.location-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.location-text{font-size:13px;color:var(--accent);font-weight:500;flex:1}
+.location-sub{font-size:11px;color:rgba(249,115,22,.55);margin-top:1px}
+
+/* CARDS LIST */
+.cards-scroll{flex:1;overflow-y:auto;padding:0 20px;-webkit-overflow-scrolling:touch}
+.cards-scroll::-webkit-scrollbar{display:none}
+.section-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+.card-item{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--card-r);padding:14px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s,transform .1s;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.card-item:active{transform:scale(.985);box-shadow:none}
+.card-item.suggested{border-color:rgba(249,115,22,.3);box-shadow:0 2px 8px rgba(249,115,22,.12)}
+.card-item.suggested::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:3px 0 0 3px}
+.card-logo{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.card-info{flex:1;min-width:0}
+.card-name{font-size:14px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-num{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.card-arrow{color:var(--muted);font-size:18px;flex-shrink:0}
+
+/* FAB */
+.fab{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);left:20px;right:20px;background:var(--accent);color:#fff;border:none;border-radius:14px;height:50px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(249,115,22,.35),0 1px 4px rgba(249,115,22,.2);transition:transform .1s,box-shadow .1s;-webkit-appearance:none}
+.fab:active{transform:scale(.97);box-shadow:0 2px 10px rgba(249,115,22,.25)}
+
+/* BOTTOM PADDING for fab */
+.cards-bottom-pad{height:80px;flex-shrink:0}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;flex-direction:column;justify-content:flex-end;z-index:100;animation:overlayIn .18s ease}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.modal-sheet{background:var(--bg2);border-radius:28px 28px 0 0;padding:0 20px calc(env(safe-area-inset-bottom,0px) + 36px);animation:sheetUp .22s cubic-bezier(.32,.72,0,1);max-height:92vh;overflow-y:auto;box-shadow:0 -4px 40px rgba(0,0,0,.12)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 18px}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:18px}
+
+/* FORM */
+.field-group{margin-bottom:14px}
+.field-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:5px;display:block}
+.field-input{width:100%;background:var(--bg3);border:.5px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none}
+.field-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.field-input::placeholder{color:var(--muted)}
+
+.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:4px}
+.emoji-opt{width:100%;aspect-ratio:1;background:var(--bg3);border:1.5px solid transparent;border-radius:10px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;transition:border-color .15s,background .15s}
+.emoji-opt.sel{border-color:var(--accent);background:var(--accent2);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.color-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:4px}
+.color-opt{width:100%;aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:transform .1s,border-color .15s}
+.color-opt:active{transform:scale(.9)}
+.color-opt.sel{border-color:white}
+
+.btn-row{display:flex;gap:10px;margin-top:18px}
+.btn-primary{flex:1;background:var(--accent);color:#fff;border:none;border-radius:12px;height:46px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;-webkit-appearance:none;box-shadow:0 2px 12px rgba(249,115,22,.3);transition:opacity .15s,transform .1s}
+.btn-primary:active{opacity:.85;transform:scale(.98)}
+.btn-secondary{flex:1;background:var(--bg3);color:var(--text);border:.5px solid var(--border2);border-radius:12px;height:46px;font-family:var(--font);font-size:14px;cursor:pointer;-webkit-appearance:none;transition:background .15s}
+.btn-secondary:active{background:var(--border2)}
+.btn-danger{flex:1;background:rgba(239,68,68,.08);color:var(--danger);border:.5px solid rgba(239,68,68,.25);border-radius:12px;height:46px;font-family:var(--font);font-size:14px;cursor:pointer;-webkit-appearance:none}
+
+.scan-btn{width:100%;background:var(--accent2);border:1px dashed rgba(249,115,22,.35);border-radius:12px;padding:13px;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--accent);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:14px;-webkit-appearance:none;transition:background .15s}
+.scan-btn:active{background:rgba(249,115,22,.2)}
+
+/* CARD DETAIL */
+.card-visual{margin:16px 20px;border-radius:22px;padding:24px;min-height:175px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;flex-shrink:0;box-shadow:var(--shadow-md)}
+.card-visual::after{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+.card-visual::before{content:'';position:absolute;left:-40px;bottom:-40px;width:140px;height:140px;border-radius:50%;background:rgba(0,0,0,.06)}
+.card-visual-name{font-size:19px;font-weight:600;color:rgba(255,255,255,.95)}
+.card-visual-logo{font-size:36px}
+.card-visual-num{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.05em}
+
+.barcode-section{padding:0 20px;flex-shrink:0}
+.display-toggle{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:12px}
+.toggle-opt{flex:1;padding:7px;text-align:center;font-size:13px;border-radius:8px;cursor:pointer;color:var(--muted);transition:all .15s}
+.toggle-opt.active{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+.barcode-display{background:#ffffff;border-radius:16px;padding:22px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:var(--shadow-md)}
+.barcode-num{font-family:var(--mono);font-size:14px;color:#222;letter-spacing:.12em;font-weight:500}
+.barcode-type-label{font-size:11px;color:#bbb;letter-spacing:.06em;text-transform:uppercase}
+.qr-display{background:#ffffff;border-radius:16px;padding:22px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:var(--shadow-md)}
+
+.detail-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.detail-bottom{padding:16px 20px calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;gap:10px;flex-shrink:0}
+
+/* SCANNER */
+.scanner-modal{position:fixed;inset:0;background:#000;z-index:200;display:flex;flex-direction:column}
+.scanner-viewport{flex:1;position:relative;overflow:hidden}
+#qg-scan{width:100%;height:100%}
+#qg-scan video{width:100%;height:100%;object-fit:cover}
+#qg-scan canvas{position:absolute!important;top:0;left:0;width:100%!important;height:100%!important}
+.scan-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:78%;max-width:300px;height:110px;border:2px solid var(--accent);border-radius:12px;position:relative}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);animation:scanLine 2s ease-in-out infinite}
+@keyframes scanLine{0%,100%{top:0}50%{top:calc(100% - 2px)}}
+.scan-hint{color:rgba(255,255,255,.55);font-size:12px;margin-top:16px}
+.scanner-header{padding:calc(env(safe-area-inset-top,0px) + 18px) 20px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.scanner-title{font-size:15px;font-weight:500;color:white}
+.scanned-result{position:absolute;bottom:90px;left:20px;right:20px;background:rgba(15,15,17,.92);border:.5px solid var(--accent);border-radius:12px;padding:12px;text-align:center}
+.scanned-code{font-family:var(--mono);font-size:13px;color:var(--accent)}
+
+/* IO MODAL */
+.io-option{background:var(--bg3);border:.5px solid var(--border2);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;margin-bottom:10px;transition:background .15s}
+.io-option:active{background:var(--border2)}
+.io-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.io-label{font-size:14px;font-weight:500}
+.io-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* EMPTY / NO RESULTS */
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--muted)}
+.empty-icon{font-size:44px;opacity:.35}
+.empty-text{font-size:14px;text-align:center;line-height:1.6}
+.no-results{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(26,25,23,.88);color:#fff;border-radius:20px;padding:9px 18px;font-size:13px;white-space:nowrap;z-index:400;pointer-events:none;animation:toastIn .18s ease;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* INSTALL BANNER */
+.install-banner{margin:0 20px 10px;background:var(--accent2);border:.5px solid rgba(249,115,22,.25);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0}
+.install-banner:active{background:rgba(249,115,22,.18)}
+.install-text{font-size:13px;color:var(--accent);font-weight:500;flex:1}
+.install-sub{font-size:11px;color:rgba(249,115,22,.6);margin-top:1px}
+.install-dismiss{color:rgba(249,115,22,.5);font-size:18px;padding:2px 4px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW error', e));
+  });
+}
+</script>
+
+<!-- Dependencies -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const CARD_COLORS = ['#e8600a','#1d4e89','#7b2d8b','#c0392b','#2d6a4f','#1a6b6b','#5c4033','#2c3e50','#6d4c41','#37474f','#4a4a6a','#854d0e'];
+const EMOJIS = ['🛒','⛽','🍕','🧴','💊','🏦','☕','🎬','👗','🏥','🐾','✈️','📱','🎮','🍔','🌿','💎','🏪'];
+const CATEGORIES = ['All','Grocery','Gas','Pharmacy','Coffee','Retail','Other'];
+
+const SUGGESTED_STORES = [
+  {keywords:['save on','saveon'],label:'Save On Foods',storeCards:['more rewards']},
+  {keywords:['safeway','sobeys'],label:'Safeway/Sobeys',storeCards:['safeway','scene']},
+  {keywords:['walmart'],label:'Walmart',storeCards:['walmart']},
+  {keywords:['tim hortons','tims'],label:'Tim Hortons',storeCards:['tim horton']},
+  {keywords:['shoppers','drug mart','pharmaprix'],label:'Shoppers Drug Mart',storeCards:['pc optimum','optimum']},
+  {keywords:['costco'],label:'Costco',storeCards:['costco']},
+  {keywords:['superstore','loblaws','real canadian','pc express'],label:'Loblaws/Superstore',storeCards:['pc optimum','optimum']},
+  {keywords:['canadian tire'],label:'Canadian Tire',storeCards:['triangle','canadian tire']},
+  {keywords:['petro'],label:'Petro-Canada',storeCards:['petro']},
+  {keywords:['esso'],label:'Esso',storeCards:['esso']},
+  {keywords:['starbucks'],label:'Starbucks',storeCards:['starbucks']},
+  {keywords:['sport chek'],label:'Sport Chek',storeCards:['triangle']},
+];
+
+const STORAGE_KEY = 'cardex_v2';
+function loadCards(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch{return[]}}
+function saveCards(c){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(c))}catch{}}
+
+function genBarSVG(code){
+  if(!code)return null;
+  const norm=code.replace(/\s/g,'');
+  const bars=[];let cx=0;
+  const w=280,h=65,pat=[];
+  for(let i=0;i<norm.length;i++){const v=norm.charCodeAt(i);pat.push((v%3)+1,(v%2)+1,(v%5>2?2:1))}
+  pat.push(1,2,1,2,1);
+  const total=pat.reduce((s,v)=>s+v,0),unit=w/total;
+  let blk=true;
+  for(const width of pat){if(blk)bars.push({x:cx,w:width*unit});cx+=width*unit;blk=!blk}
+  return{bars,w,h};
+}
+
+function BarcodeDisplay({code}){
+  const svg=genBarSVG(code);
+  if(!svg)return null;
+  return(
+    <div className="barcode-display">
+      <svg width="100%" viewBox={`0 0 ${svg.w} ${svg.h}`} style={{maxWidth:280,height:65}}>
+        {svg.bars.map((b,i)=><rect key={i} x={b.x} y={0} width={b.w} height={svg.h} fill="#111"/>)}
+      </svg>
+      <div className="barcode-num">{code}</div>
+      <div className="barcode-type-label">Code 128</div>
+    </div>
+  );
+}
+
+function QRDisplay({code}){
+  const ref=useRef(null);
+  useEffect(()=>{
+    if(!ref.current||!code||!window.QRCode)return;
+    ref.current.innerHTML='';
+    try{new QRCode(ref.current,{text:code,width:180,height:180,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M})}catch(e){}
+  },[code]);
+  return(
+    <div className="qr-display">
+      <div ref={ref}/>
+      <div className="barcode-num">{code}</div>
+    </div>
+  );
+}
+
+function Toast({msg}){return msg?<div className="toast">{msg}</div>:null}
+
+function ScannerView({onDetected,onClose}){
+  const[code,setCode]=useState('');
+  const started=useRef(false);
+  useEffect(()=>{
+    const el=document.getElementById('qg-scan');
+    if(!el||started.current)return;
+    Quagga.init({
+      inputStream:{name:'Live',type:'LiveStream',target:el,constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}},
+      decoder:{readers:['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader','codabar_reader']},
+      locate:true
+    },err=>{
+      if(err){alert('Camera error: '+(err.message||err));onClose();return}
+      Quagga.start();started.current=true;
+      let last='';
+      Quagga.onDetected(r=>{
+        const c=r.codeResult.code;
+        if(c===last)return;last=c;setCode(c);
+        setTimeout(()=>onDetected(c),700);
+      });
+    });
+    return()=>{if(started.current){Quagga.stop();started.current=false}};
+  },[]);
+  return(
+    <div className="scanner-modal">
+      <div className="scanner-header">
+        <button className="icon-btn" onClick={onClose} style={{background:'rgba(255,255,255,.1)',borderColor:'rgba(255,255,255,.15)',color:'white'}}>✕</button>
+        <span className="scanner-title">Scan barcode</span>
+      </div>
+      <div className="scanner-viewport">
+        <div id="qg-scan"/>
+        <div className="scan-overlay">
+          <div className="scan-frame"><div className="scan-line"/></div>
+          <div className="scan-hint">Hold steady over barcode</div>
+        </div>
+        {code&&<div className="scanned-result"><div style={{fontSize:11,color:'var(--muted)',marginBottom:3}}>Detected</div><div className="scanned-code">{code}</div></div>}
+      </div>
+    </div>
+  );
+}
+
+function AddModal({initial,onSave,onClose}){
+  const[name,setName]=useState(initial?.name||'');
+  const[number,setNumber]=useState(initial?.number||'');
+  const[emoji,setEmoji]=useState(initial?.emoji||'🛒');
+  const[color,setColor]=useState(initial?.color||CARD_COLORS[0]);
+  const[keywords,setKeywords]=useState(initial?.keywords||'');
+  const[category,setCategory]=useState(initial?.category||'Other');
+  const[scanning,setScanning]=useState(false);
+  if(scanning)return<ScannerView onDetected={c=>{setNumber(c);setScanning(false)}} onClose={()=>setScanning(false)}/>;
+  const save=()=>{
+    if(!name.trim()||!number.trim())return;
+    onSave({id:initial?.id||Date.now().toString(),name:name.trim(),number:number.trim(),emoji,color,keywords:keywords.trim(),category});
+  };
+  return(
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-sheet">
+        <div className="modal-handle"/>
+        <div className="modal-title">{initial?'Edit card':'Add card'}</div>
+        <div className="field-group">
+          <label className="field-label">Card name</label>
+          <input className="field-input" placeholder="e.g. More Rewards" value={name} onChange={e=>setName(e.target.value)}/>
+        </div>
+        <div className="field-group">
+          <label className="field-label">Card number</label>
+          <input className="field-input" placeholder="Enter or scan" value={number} onChange={e=>setNumber(e.target.value)} style={{fontFamily:'var(--mono)'}}/>
+        </div>
+        <button className="scan-btn" onClick={()=>setScanning(true)}>
+          <span>📷</span> Scan barcode with camera
+        </button>
+        <div className="field-group">
+          <label className="field-label">Category</label>
+          <div className="filter-row" style={{padding:0,marginBottom:0,flexWrap:'wrap'}}>
+            {CATEGORIES.filter(c=>c!=='All').map(c=>(
+              <div key={c} className={`filter-chip${category===c?' active':''}`} onClick={()=>setCategory(c)}>{c}</div>
+            ))}
+          </div>
+        </div>
+        <div className="field-group">
+          <label className="field-label">Location keywords</label>
+          <input className="field-input" placeholder="e.g. save on, more rewards" value={keywords} onChange={e=>setKeywords(e.target.value)}/>
+          <div style={{fontSize:11,color:'var(--muted)',marginTop:5}}>Comma-separated — surfaces this card when nearby store matches.</div>
+        </div>
+        <div className="field-group">
+          <label className="field-label">Icon</label>
+          <div className="emoji-grid">{EMOJIS.map(e=><button key={e} className={`emoji-opt${emoji===e?' sel':''}`} onClick={()=>setEmoji(e)}>{e}</button>)}</div>
+        </div>
+        <div className="field-group">
+          <label className="field-label">Card colour</label>
+          <div className="color-grid">{CARD_COLORS.map(c=><div key={c} className={`color-opt${color===c?' sel':''}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div>
+        </div>
+        <div className="btn-row">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={save} style={{opacity:(!name.trim()||!number.trim())?.4:1}}>Save card</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IOModal({onClose,onImport,cards}){
+  const fileRef=useRef(null);
+  const exportAll=()=>{
+    const blob=new Blob([JSON.stringify(cards,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='cardex-backup.json';a.click();
+    URL.revokeObjectURL(url);onClose();
+  };
+  const handleFile=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        if(Array.isArray(parsed)){onImport(parsed);onClose()}else alert('Invalid backup file.');
+      }catch{alert('Could not parse file.')}
+    };
+    r.readAsText(file);
+  };
+  return(
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-sheet">
+        <div className="modal-handle"/>
+        <div className="modal-title">Import / Export</div>
+        <div className="io-option" onClick={exportAll}>
+          <div className="io-icon" style={{background:'var(--accent2)'}}>📤</div>
+          <div><div className="io-label">Export backup</div><div className="io-sub">Download all cards as JSON</div></div>
+        </div>
+        <div className="io-option" onClick={()=>fileRef.current?.click()}>
+          <div className="io-icon" style={{background:'var(--bg3)'}}>📥</div>
+          <div><div className="io-label">Import backup</div><div className="io-sub">Restore cards from JSON file</div></div>
+        </div>
+        <input ref={fileRef} type="file" accept=".json" style={{display:'none'}} onChange={handleFile}/>
+        <div className="btn-row"><button className="btn-secondary" style={{flex:'unset',width:'100%'}} onClick={onClose}>Cancel</button></div>
+      </div>
+    </div>
+  );
+}
+
+function DetailView({card,onBack,onEdit,onDelete}){
+  const[mode,setMode]=useState('barcode');
+  const[copied,setCopied]=useState(false);
+  const wakeLock=useRef(null);
+
+  useEffect(()=>{
+    // Maximize screen brightness for barcode scanning
+    let prevBrightness;
+    const boost=async()=>{
+      try{if('wakeLock' in navigator)wakeLock.current=await navigator.wakeLock.request('screen')}catch(e){}
+      try{if(window.screen.brightness!=null){prevBrightness=window.screen.brightness;window.screen.brightness=1}}catch(e){}
+    };
+    boost();
+    return()=>{
+      if(wakeLock.current){wakeLock.current.release();wakeLock.current=null}
+      try{if(prevBrightness!=null)window.screen.brightness=prevBrightness}catch(e){}
+    };
+  },[]);
+
+  const copy=()=>{
+    navigator.clipboard?.writeText(card.number).catch(()=>{});
+    setCopied(true);setTimeout(()=>setCopied(false),2000);
+  };
+  return(
+    <div className="screen">
+      <div className="header">
+        <button className="icon-btn" onClick={onBack}>←</button>
+        <div style={{flex:1,textAlign:'center',fontWeight:500,fontSize:15,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{card.name}</div>
+        <button className="icon-btn" onClick={onEdit}>✏️</button>
+      </div>
+      <div className="detail-scroll">
+        <div className="card-visual" style={{background:card.color}}>
+          <div className="card-visual-logo">{card.emoji}</div>
+          <div>
+            <div className="card-visual-name">{card.name}</div>
+            <div className="card-visual-num">{card.number}</div>
+          </div>
+        </div>
+        <div className="barcode-section">
+          <div className="display-toggle">
+            <div className={`toggle-opt${mode==='barcode'?' active':''}`} onClick={()=>setMode('barcode')}>Barcode</div>
+            <div className={`toggle-opt${mode==='qr'?' active':''}`} onClick={()=>setMode('qr')}>QR code</div>
+          </div>
+          {mode==='barcode'?<BarcodeDisplay code={card.number}/>:<QRDisplay code={card.number}/>}
+        </div>
+        <button onClick={copy} style={{margin:'10px 20px 0',background:'var(--bg2)',border:'.5px solid var(--border2)',borderRadius:10,padding:'9px 14px',color:copied?'var(--accent)':'var(--muted)',fontFamily:'var(--font)',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:6,justifyContent:'center',width:'calc(100% - 40px)',boxShadow:'var(--shadow)'}}>
+          {copied?'✓ Copied!':'⎘ Copy number'}
+        </button>
+        {card.keywords&&(
+          <div style={{padding:'14px 20px 0'}}>
+            <div style={{fontSize:11,color:'var(--muted)',marginBottom:7,textTransform:'uppercase',letterSpacing:'.08em',fontWeight:500}}>Location keywords</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+              {card.keywords.split(',').map(k=>k.trim()).filter(Boolean).map(k=>(
+                <span key={k} style={{background:'var(--accent2)',border:'.5px solid rgba(249,115,22,.3)',borderRadius:20,padding:'4px 10px',fontSize:12,color:'var(--accent)'}}>{k}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        <div style={{height:20}}/>
+      </div>
+      <div className="detail-bottom">
+        <button className="btn-danger" onClick={onDelete}>Delete</button>
+        <button className="btn-secondary" onClick={onBack}>Done</button>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[cards,setCards]=useState(loadCards);
+  const[view,setView]=useState('home');
+  const[selected,setSelected]=useState(null);
+  const[showAdd,setShowAdd]=useState(false);
+  const[editCard,setEditCard]=useState(null);
+  const[showIO,setShowIO]=useState(false);
+  const[search,setSearch]=useState('');
+  const[filterCat,setFilterCat]=useState('All');
+  const[locationStore,setLocationStore]=useState(null);
+  const[locLoading,setLocLoading]=useState(false);
+  const[toast,setToast]=useState('');
+  const[installPrompt,setInstallPrompt]=useState(null);
+  const[showInstallBanner,setShowInstallBanner]=useState(false);
+  const[isIOS,setIsIOS]=useState(false);
+
+  useEffect(()=>{saveCards(cards)},[cards]);
+
+  // PWA install prompt
+  useEffect(()=>{
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone;
+    setIsIOS(ios);
+    if(ios)setShowInstallBanner(true);
+    const handler=e=>{e.preventDefault();setInstallPrompt(e);setShowInstallBanner(true)};
+    window.addEventListener('beforeinstallprompt',handler);
+    return()=>window.removeEventListener('beforeinstallprompt',handler);
+  },[]);
+
+  const installApp=async()=>{
+    if(installPrompt){
+      installPrompt.prompt();
+      const{outcome}=await installPrompt.userChoice;
+      if(outcome==='accepted'){setShowInstallBanner(false);setInstallPrompt(null)}
+    }
+  };
+
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(''),2200)};
+
+  const detectLocation=useCallback(()=>{
+    if(!navigator.geolocation){showToast('Geolocation not supported');return}
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      try{
+        const{latitude:lat,longitude:lon}=pos.coords;
+        const res=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18`,{headers:{'Accept-Language':'en'}});
+        const data=await res.json();
+        const combined=(data.display_name+' '+(data.name||'')).toLowerCase();
+        let matched=null;
+        for(const s of SUGGESTED_STORES){if(s.keywords.some(k=>combined.includes(k))){matched=s;break}}
+        setLocationStore(matched?{...matched,coords:`${lat.toFixed(4)},${lon.toFixed(4)}`}:{label:'No store matched nearby',storeCards:[],coords:`${lat.toFixed(4)},${lon.toFixed(4)}`});
+      }catch{showToast('Could not fetch location')}
+      setLocLoading(false);
+    },()=>{showToast('Location access denied');setLocLoading(false)});
+  },[]);
+
+  useEffect(()=>{detectLocation()},[]);
+
+  const addOrUpdate=card=>{
+    if(editCard){setCards(p=>p.map(c=>c.id===card.id?card:c));showToast('Card updated')}
+    else{setCards(p=>[card,...p]);showToast('Card added!')}
+    setShowAdd(false);setEditCard(null);
+  };
+
+  const deleteCard=id=>{
+    setCards(p=>p.filter(c=>c.id!==id));
+    setView('home');setSelected(null);showToast('Card removed');
+  };
+
+  const importCards=imported=>{
+    setCards(p=>{
+      const ex=new Set(p.map(c=>c.id));
+      const nw=imported.filter(c=>!ex.has(c.id));
+      showToast(`Imported ${nw.length} card${nw.length!==1?'s':''}`);
+      return[...nw,...p];
+    });
+  };
+
+  const suggestedCards=locationStore?.storeCards?.length
+    ?cards.filter(c=>{
+        const kw=(c.keywords||'').toLowerCase();
+        const nm=c.name.toLowerCase();
+        return locationStore.storeCards.some(sc=>nm.includes(sc)||kw.includes(sc)||sc.includes(nm.split(' ')[0]));
+      })
+    :[];
+
+  const filtered=cards.filter(c=>{
+    const q=search.toLowerCase();
+    const ms=!q||c.name.toLowerCase().includes(q)||c.number.includes(q)||(c.keywords||'').toLowerCase().includes(q);
+    const mc=filterCat==='All'||c.category===filterCat;
+    return ms&&mc;
+  });
+
+  const showSuggested=suggestedCards.length>0&&!search&&filterCat==='All';
+
+  if(view==='detail'&&selected){
+    const card=cards.find(c=>c.id===selected);
+    if(!card){setView('home');setSelected(null);return null}
+    return<>
+      <DetailView card={card} onBack={()=>{setView('home');setSelected(null)}} onEdit={()=>{setEditCard(card);setShowAdd(true)}} onDelete={()=>deleteCard(card.id)}/>
+      {showAdd&&<AddModal initial={editCard} onSave={addOrUpdate} onClose={()=>{setShowAdd(false);setEditCard(null)}}/>}
+      <Toast msg={toast}/>
+    </>;
+  }
+
+  return(
+    <div className="screen">
+      <div className="header">
+        <div className="app-title">Card<span>ex</span></div>
+        <div className="header-actions">
+          <button className="icon-btn" onClick={()=>setShowIO(true)} title="Import/Export">⇅</button>
+          <button className="icon-btn" onClick={detectLocation} title="Detect location">{locLoading?'⟳':'◎'}</button>
+        </div>
+      </div>
+
+      <div className="search-bar">
+        <span className="search-icon">⌕</span>
+        <input className="search-input" placeholder="Search cards..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        {search&&<span className="search-clear" onClick={()=>setSearch('')}>✕</span>}
+      </div>
+
+      <div className="filter-row">
+        {CATEGORIES.map(c=><div key={c} className={`filter-chip${filterCat===c?' active':''}`} onClick={()=>setFilterCat(c)}>{c}</div>)}
+      </div>
+
+      {showInstallBanner&&(
+        <div className="install-banner" onClick={isIOS?null:installApp}>
+          <div>
+            <div className="install-text">📲 Install Cardex</div>
+            <div className="install-sub">{isIOS?'Tap Share → Add to Home Screen':'Add to home screen for offline use'}</div>
+          </div>
+          <span className="install-dismiss" onClick={e=>{e.stopPropagation();setShowInstallBanner(false)}}>✕</span>
+        </div>
+      )}
+
+      {locationStore&&!search&&filterCat==='All'&&(
+        <div className="location-banner" onClick={detectLocation}>
+          <div className="location-dot"/>
+          <div>
+            <div className="location-text">{locationStore.label}</div>
+            {locationStore.coords&&<div className="location-sub">{locationStore.coords}</div>}
+          </div>
+          <span style={{fontSize:12,color:'rgba(249,115,22,.55)'}}>↺</span>
+        </div>
+      )}
+
+      <div className="cards-scroll">
+        {showSuggested&&(
+          <div style={{marginBottom:18}}>
+            <div className="section-label">Suggested nearby</div>
+            {suggestedCards.map(c=>(
+              <div key={c.id} className="card-item suggested" onClick={()=>{setSelected(c.id);setView('detail')}}>
+                <div className="card-logo" style={{background:c.color}}>{c.emoji}</div>
+                <div className="card-info"><div className="card-name">{c.name}</div><div className="card-num">{c.number}</div></div>
+                <div className="card-arrow">›</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {filtered.length===0&&cards.length===0&&(
+          <div className="empty-state">
+            <div className="empty-icon">🪪</div>
+            <div className="empty-text">No cards yet.<br/>Tap below to add your first loyalty card.</div>
+          </div>
+        )}
+        {filtered.length===0&&cards.length>0&&(
+          <div className="no-results">No cards match "{search||filterCat}"</div>
+        )}
+        {filtered.length>0&&(
+          <div>
+            <div className="section-label">{search||filterCat!=='All'?`Results (${filtered.length})`:'All cards'}</div>
+            {filtered.map(c=>(
+              <div key={c.id} className="card-item" onClick={()=>{setSelected(c.id);setView('detail')}}>
+                <div className="card-logo" style={{background:c.color}}>{c.emoji}</div>
+                <div className="card-info"><div className="card-name">{c.name}</div><div className="card-num">{c.number}</div></div>
+                <div className="card-arrow">›</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="cards-bottom-pad"/>
+      </div>
+
+      <button className="fab" onClick={()=>{setEditCard(null);setShowAdd(true)}}>
+        <span style={{fontSize:19,lineHeight:1}}>＋</span> Add card
+      </button>
+
+      {showAdd&&<AddModal initial={editCard} onSave={addOrUpdate} onClose={()=>{setShowAdd(false);setEditCard(null)}}/>}
+      {showIO&&<IOModal cards={cards} onImport={importCards} onClose={()=>setShowIO(false)}/>}
+      <Toast msg={toast}/>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.getElementById('app'));
+</script>
+</body>
+</html>
