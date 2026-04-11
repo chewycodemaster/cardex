@@ -1,6 +1,6 @@
 // Cardex Service Worker
 // CACHE_VERSION auto-bumps on every deploy — change this string when you push.
-const CACHE_VERSION = '2026-04-08-001';
+const CACHE_VERSION = '2026-04-10-001';
 const CACHE_NAME = 'cardex-' + CACHE_VERSION;
 
 const STATIC_URLS = [
@@ -9,6 +9,7 @@ const STATIC_URLS = [
   'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+  'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'
 ];
 

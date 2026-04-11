@@ -215,6 +215,7 @@ if('serviceWorker' in navigator){
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
@@ -515,30 +516,26 @@ const CARD_COLORS = [
 
 
 /* ── Barcode / QR ── */
-function genBarSVG(code) {
-  if (!code) return null;
-  const norm = code.replace(/\s/g, '');
-  const bars = []; let cx = 0;
-  const w = 280, h = 120, pat = [];
-  for (let i = 0; i < norm.length; i++) {
-    const v = norm.charCodeAt(i);
-    pat.push((v % 3) + 1, (v % 2) + 1, (v % 5 > 2 ? 2 : 1));
-  }
-  pat.push(1, 2, 1, 2, 1);
-  const total = pat.reduce((s, v) => s + v, 0), unit = w / total;
-  let blk = true;
-  for (const width of pat) { if (blk) bars.push({ x: cx, w: width * unit }); cx += width * unit; blk = !blk; }
-  return { bars, w, h };
-}
-
 function BarcodeDisplay({ code }) {
-  const svg = genBarSVG(code);
-  if (!svg) return null;
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current || !code || !window.JsBarcode) return;
+    const norm = code.replace(/\s/g, '');
+    try {
+      JsBarcode(ref.current, norm, {
+        format: 'CODE128',
+        width: 2,
+        height: 80,
+        displayValue: false,
+        margin: 0,
+        background: '#ffffff',
+        lineColor: '#111111'
+      });
+    } catch (e) {}
+  }, [code]);
   return (
     <div className="barcode-display">
-      <svg width="100%" viewBox={`0 0 ${svg.w} ${svg.h}`} style={{ maxWidth: 340, height: 120 }}>
-        {svg.bars.map((b, i) => <rect key={i} x={b.x} y={0} width={b.w} height={svg.h} fill="#111" />)}
-      </svg>
+      <svg ref={ref} style={{ maxWidth: '100%', width: '100%' }} />
       <div className="barcode-num">{code}</div>
       <div className="barcode-type-label">Code 128</div>
     </div>
