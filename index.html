@@ -531,11 +531,13 @@ function BarcodeDisplay({ code }) {
         background: '#ffffff',
         lineColor: '#111111'
       });
+      ref.current.removeAttribute('width');
+      ref.current.removeAttribute('height');
     } catch (e) {}
   }, [code]);
   return (
     <div className="barcode-display">
-      <svg ref={ref} style={{ maxWidth: '100%', width: '100%' }} />
+      <svg ref={ref} style={{ width: '90%', height: 'auto', display: 'block' }} />
       <div className="barcode-num">{code}</div>
       <div className="barcode-type-label">Code 128</div>
     </div>
