@@ -780,8 +780,8 @@ function SettingsModal({ settings, onSave, onClose, cards, onImport }) {
 }
 
 /* ── Detail View ── */
-function DetailView({ card, onBack, onEdit, onDelete }) {
-  const [mode, setMode] = useState('barcode');
+function DetailView({ card, onBack, onEdit, onDelete, onModeChange }) {
+  const [mode, setMode] = useState(card.displayMode || 'barcode');
   const [copied, setCopied] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const wakeLock = useRef(null);
@@ -840,8 +840,8 @@ function DetailView({ card, onBack, onEdit, onDelete }) {
         </div>
         <div className="barcode-section">
           <div className="display-toggle">
-            <div className={`toggle-opt${mode === 'barcode' ? ' active' : ''}`} onClick={() => setMode('barcode')}>Barcode</div>
-            <div className={`toggle-opt${mode === 'qr' ? ' active' : ''}`} onClick={() => setMode('qr')}>QR code</div>
+            <div className={`toggle-opt${mode === 'barcode' ? ' active' : ''}`} onClick={() => { setMode('barcode'); onModeChange('barcode'); }}>Barcode</div>
+            <div className={`toggle-opt${mode === 'qr' ? ' active' : ''}`} onClick={() => { setMode('qr'); onModeChange('qr'); }}>QR code</div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:6,marginTop:8,padding:'7px 12px',background:'rgba(0,0,0,.04)',borderRadius:10}}>
             <span style={{fontSize:15}}>☀️</span>
@@ -1048,6 +1048,7 @@ function App() {
         onBack={() => { setView('home'); setSelected(null); }}
         onEdit={() => { setEditCard(card); setShowAdd(true); }}
         onDelete={() => deleteCard(card.id)}
+        onModeChange={m => setCards(prev => prev.map(c => c.id === card.id ? { ...c, displayMode: m } : c))}
       />
       {showAdd && <AddModal initial={editCard} onSave={addOrUpdate} onClose={() => { setShowAdd(false); setEditCard(null); }} />}
       <Toast msg={toast} />
