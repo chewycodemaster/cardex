@@ -963,7 +963,15 @@ function App() {
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(''), 2200); };
 
-  const detectLocation = useCallback(() => {
+  const openCard = cardId => {
+    setCards(prev => prev.map(c => c.id === cardId ? { ...c, useCount: (c.useCount || 0) + 1, lastUsed: Date.now() } : c));
+    // Push a history entry so the back gesture has somewhere to go
+    history.pushState({ cardex: true }, '');
+    setSelected(cardId);
+    setView('detail');
+  };
+
+  const detectLocation = () => {
     if (!navigator.geolocation) { showToast('Geolocation not supported'); return; }
     setLocLoading(true);
     navigator.geolocation.getCurrentPosition(async pos => {
@@ -975,10 +983,19 @@ function App() {
         let matched = null;
         for (const s of SUGGESTED_STORES) { if (s.keywords.some(k => combined.includes(k))) { matched = s; break; } }
         setLocationStore(matched ? { ...matched, coords: `${lat.toFixed(4)},${lon.toFixed(4)}` } : null);
+        // Auto-open if exactly one card in the wallet matches the detected store
+        if (matched?.storeCards?.length) {
+          const hits = cards.filter(c => {
+            const kw = (c.keywords || '').toLowerCase();
+            const nm = c.name.toLowerCase();
+            return matched.storeCards.some(sc => nm.includes(sc) || kw.includes(sc) || sc.includes(nm.split(' ')[0]));
+          });
+          if (hits.length === 1) openCard(hits[0].id);
+        }
       } catch { showToast('Could not fetch location'); }
       setLocLoading(false);
     }, () => { showToast('Location access denied'); setLocLoading(false); });
-  }, []);
+  };
 
   useEffect(() => { detectLocation(); }, []);
 
@@ -995,14 +1012,6 @@ function App() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [view, showAdd]);
-
-  const openCard = cardId => {
-    setCards(prev => prev.map(c => c.id === cardId ? { ...c, useCount: (c.useCount || 0) + 1, lastUsed: Date.now() } : c));
-    // Push a history entry so the back gesture has somewhere to go
-    history.pushState({ cardex: true }, '');
-    setSelected(cardId);
-    setView('detail');
-  };
 
   const addOrUpdate = card => {
     if (editCard) { setCards(p => p.map(c => c.id === card.id ? card : c)); showToast('Card updated'); }
