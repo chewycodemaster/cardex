@@ -1,6 +1,6 @@
 // Cardex Service Worker
 // CACHE_VERSION auto-bumps on every deploy — change this string when you push.
-const CACHE_VERSION = '2026-04-10-001';
+const CACHE_VERSION = '2026-05-12-001';
 const CACHE_NAME = 'cardex-' + CACHE_VERSION;
 
 const STATIC_URLS = [
